@@ -1,0 +1,38 @@
+{
+    "name": "graphql-document-tools",
+    "version": "0.0.1",
+    "description": "functions to extract information about graphql queries",
+    "main": "lib/index.js",
+    "repository": "git@github.com:sharkcore/graphql-document-tools.git",
+    "author": "Mark Larah <mark@larah.me>",
+    "license": "MIT",
+    "private": false,
+    "scripts": {
+        "build": "babel src --out-dir lib --source-maps true",
+        "test": "jest"
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.8.4",
+        "@babel/core": "^7.9.0",
+        "@babel/preset-env": "^7.9.5",
+        "@babel/preset-flow": "^7.9.0",
+        "flow-bin": "^0.123.0",
+        "flow-copy-source": "^2.0.9",
+        "husky": "^4.2.5",
+        "jest": "^25.4.0",
+        "prettier": "^2.0.5",
+        "pretty-quick": "^2.0.1"
+    },
+    "dependencies": {
+        "core-js": "3",
+        "graphql": "^15.0.0"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "pretty-quick --staged"
+        }
+    },
+    "files": [
+        "lib"
+    ]
+}
