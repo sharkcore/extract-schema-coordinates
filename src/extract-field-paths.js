@@ -1,7 +1,14 @@
 // @flow
 
 import invariant from 'assert';
-import { parse, visit, type SelectionSetNode, type OperationDefinitionNode } from 'graphql';
+import memoize from 'lodash.memoize';
+import { parse as _parse, visit, type SelectionSetNode, type OperationDefinitionNode } from 'graphql';
+
+/**
+ * A memoized version of graphql's parse function
+ * @see https://graphql.org/graphql-js/language/#parse
+ */
+const parse = memoize(_parse);
 
 /**
  * Recursively unwrap a type object to get the human readable type name
