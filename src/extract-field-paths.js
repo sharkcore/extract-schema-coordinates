@@ -163,11 +163,29 @@ export default function extractFieldPaths(
             fieldPaths.add(`${type}.${fieldName}`);
 
             if (selection.selectionSet != null) {
+                /**
+                 * Now that we have `Foo.bar`, we need to look at `typeToFieldsMap`, to look up what
+                 * type 'bar' returns from `Foo`. This lets us continue our iteration at the next level down.
+                 */
                 const fieldType = typeToFieldsMap[type].find(({ field }) => field === fieldName);
-                queue.push({
-                    type: fieldType.type,
-                    selectionSet: selection.selectionSet,
-                });
+
+                if (fieldType == null) {
+                    /**
+                     * If `fieldType` is null, that means we couldn't find the attribute 'bar' of 'Foo' in `typeToFieldsMap`.
+                     * This means that the field we're referencing doesn't exist in the schema.
+                     *
+                     * This means either:
+                     * - The schema is invalid for this document (could be outdated)
+                     * - The document is invalid for this schema (could be outdated)
+                     *
+                     * TODO: add an option to throw an error in this case
+                     */
+                } else {
+                    queue.push({
+                        type: fieldType.type,
+                        selectionSet: selection.selectionSet,
+                    });
+                }
             }
         });
     }

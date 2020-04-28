@@ -33,3 +33,66 @@ test('extractFieldPaths works for basic SWAPI query', () => {
         'Root.allFilms',
     ]);
 });
+
+test('includes non-existant fields (e.g. for outdated schemas) as leaf nodes', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                allFilms {
+                    films {
+                        I_DONT_EXIST
+                        title
+                        director
+                        planetConnection {
+                            planets {
+                                name
+                                I_DONT_EXIST
+                            }
+                        }
+                    }
+                }
+            }
+        `,
+        SWAPI_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'Film.I_DONT_EXIST',
+        'Film.director',
+        'Film.planetConnection',
+        'Film.title',
+        'FilmPlanetsConnection.planets',
+        'FilmsConnection.films',
+        'Planet.I_DONT_EXIST',
+        'Planet.name',
+        'Root.allFilms',
+    ]);
+});
+
+test('includes non-existant fields (e.g. for outdated schemas) as non-leaf nodes', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                allFilms {
+                    films {
+                        I_DONT_EXIST {
+                            foo
+                            bar
+                        }
+                        title
+                        director
+                    }
+                }
+            }
+        `,
+        SWAPI_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'Film.I_DONT_EXIST',
+        'Film.director',
+        'Film.title',
+        'FilmsConnection.films',
+        'Root.allFilms',
+    ]);
+});
