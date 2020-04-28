@@ -1,6 +1,6 @@
 {
     "name": "graphql-document-tools",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "functions to extract information about graphql queries",
     "main": "lib/index.js",
     "repository": "git@github.com:sharkcore/graphql-document-tools.git",
