@@ -248,3 +248,23 @@ test('inline fragments with interface fields', () => {
         'Root.animalOwner',
     ]);
 });
+
+test("copes with types that don't exist in the schema", () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                allSpecies {
+                    name
+                    ... on Snake {
+                        skin {
+                            color
+                        }
+                    }
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual(['Animal.name', 'Root.allSpecies', 'Snake.skin']);
+});

@@ -204,10 +204,30 @@ export default function extractFieldPaths(
 
             if (selection.selectionSet != null) {
                 /**
-                 * Now that we have `Foo.bar`, we need to look at `typeToFieldsMap`, to look up what
-                 * type 'bar' returns from `Foo`. This lets us continue our iteration at the next level down.
+                 * Now that we have a field path - e.g `Business.reviews`, we need to look at
+                 * `typeToFieldsMap`, to see what attributes `Business` has. This will tell us
+                 * what _type_ the `reviews` resolver will return (`Review`).
                  */
-                const fieldType = typeToFieldsMap[type].find(({ field }) => field === fieldName);
+                const typeAttributes = typeToFieldsMap[type];
+
+                /**
+                 * It's possible that nothing exists in the lookup map we created from the schema.
+                 * This means either:
+                 * - The schema is invalid for this document (could be outdated)
+                 * - The document is invalid for this schema (could be outdated)
+                 *
+                 * We're going to default to coping with this and ignoring it.
+                 *
+                 * TODO: add an option to throw an error in this case, rather than gobble this up.
+                 */
+                if (typeAttributes == null) {
+                    return;
+                }
+
+                /**
+                 * Check what _type_ `Foo.bar` returns
+                 */
+                const fieldType = typeAttributes.find(({ field }) => field === fieldName);
 
                 if (fieldType == null) {
                     /**
