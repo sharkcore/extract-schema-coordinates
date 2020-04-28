@@ -1,36 +1,55 @@
 import fs from 'fs';
 import path from 'path';
 import { extractFieldPaths } from '../src';
-const SWAPI_SCHEMA = fs.readFileSync(path.join(__dirname, '../testing/swapi.schema.graphql'), 'utf8');
+const PETS_SCHEMA = fs.readFileSync(path.join(__dirname, '../testing/pets.schema.graphql'), 'utf8');
 
-test('extractFieldPaths works for basic SWAPI query', () => {
+test('extractFieldPaths works for basic query', () => {
     const fieldPaths = extractFieldPaths(
         /* GraphQL */ `
             {
-                allFilms {
-                    films {
-                        title
-                        director
-                        planetConnection {
-                            planets {
-                                name
-                            }
-                        }
+                animalOwner {
+                    name
+                    contactDetails {
+                        email
                     }
                 }
             }
         `,
-        SWAPI_SCHEMA,
+        PETS_SCHEMA,
     );
 
     expect([...fieldPaths].sort()).toEqual([
-        'Film.director',
-        'Film.planetConnection',
-        'Film.title',
-        'FilmPlanetsConnection.planets',
-        'FilmsConnection.films',
-        'Planet.name',
-        'Root.allFilms',
+        'ContactDetails.email',
+        'Human.contactDetails',
+        'Human.name',
+        'Root.animalOwner',
+    ]);
+});
+
+test('extractFieldPaths works for multiple operations', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                animalOwner {
+                    name
+                }
+            }
+            {
+                animalOwner {
+                    contactDetails {
+                        email
+                    }
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'ContactDetails.email',
+        'Human.contactDetails',
+        'Human.name',
+        'Root.animalOwner',
     ]);
 });
 
@@ -38,34 +57,25 @@ test('includes non-existant fields (e.g. for outdated schemas) as leaf nodes', (
     const fieldPaths = extractFieldPaths(
         /* GraphQL */ `
             {
-                allFilms {
-                    films {
+                animalOwner {
+                    name
+                    I_DONT_EXIST
+                    contactDetails {
+                        email
                         I_DONT_EXIST
-                        title
-                        director
-                        planetConnection {
-                            planets {
-                                name
-                                I_DONT_EXIST
-                            }
-                        }
                     }
                 }
             }
         `,
-        SWAPI_SCHEMA,
+        PETS_SCHEMA,
     );
-
     expect([...fieldPaths].sort()).toEqual([
-        'Film.I_DONT_EXIST',
-        'Film.director',
-        'Film.planetConnection',
-        'Film.title',
-        'FilmPlanetsConnection.planets',
-        'FilmsConnection.films',
-        'Planet.I_DONT_EXIST',
-        'Planet.name',
-        'Root.allFilms',
+        'ContactDetails.I_DONT_EXIST',
+        'ContactDetails.email',
+        'Human.I_DONT_EXIST',
+        'Human.contactDetails',
+        'Human.name',
+        'Root.animalOwner',
     ]);
 });
 
@@ -73,26 +83,241 @@ test('includes non-existant fields (e.g. for outdated schemas) as non-leaf nodes
     const fieldPaths = extractFieldPaths(
         /* GraphQL */ `
             {
-                allFilms {
-                    films {
+                animalOwner {
+                    name
+                    contactDetails {
+                        email
                         I_DONT_EXIST {
                             foo
                             bar
                         }
-                        title
-                        director
                     }
                 }
             }
         `,
-        SWAPI_SCHEMA,
+        PETS_SCHEMA,
     );
 
     expect([...fieldPaths].sort()).toEqual([
-        'Film.I_DONT_EXIST',
-        'Film.director',
-        'Film.title',
-        'FilmsConnection.films',
-        'Root.allFilms',
+        'ContactDetails.I_DONT_EXIST',
+        'ContactDetails.email',
+        'Human.contactDetails',
+        'Human.name',
+        'Root.animalOwner',
     ]);
 });
+
+test('fragments', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                animalOwner {
+                    name
+                }
+                allSpecies {
+                    ...doggoDetails
+                    ...catFacts
+                }
+                pets {
+                    ...parrotParticulars
+                }
+            }
+
+            fragment doggoDetails on Dog {
+                breed
+            }
+
+            fragment catFacts on Cat {
+                favoriteMilkBrand
+                name
+            }
+
+            fragment parrotParticulars on Parrot {
+                wingSpan
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'Cat.favoriteMilkBrand',
+        'Cat.name',
+        'Dog.breed',
+        'Human.name',
+        'Parrot.wingSpan',
+        'Root.allSpecies',
+        'Root.animalOwner',
+        'Root.pets',
+    ]);
+});
+
+test('fragments with interface fields', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                animalOwner {
+                    name
+                }
+                allSpecies {
+                    name
+                    ...doggoDetails
+                }
+            }
+
+            fragment doggoDetails on Dog {
+                breed
+                name
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'Animal.name',
+        'Dog.breed',
+        'Dog.name',
+        'Human.name',
+        'Root.allSpecies',
+        'Root.animalOwner',
+    ]);
+});
+
+test('inline fragments', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                animalOwner {
+                    name
+                }
+                allSpecies {
+                    ... on Dog {
+                        breed
+                    }
+                    ... on Cat {
+                        favoriteMilkBrand
+                        name
+                    }
+                }
+                pets {
+                    ... on Parrot {
+                        wingSpan
+                    }
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'Cat.favoriteMilkBrand',
+        'Cat.name',
+        'Dog.breed',
+        'Human.name',
+        'Parrot.wingSpan',
+        'Root.allSpecies',
+        'Root.animalOwner',
+        'Root.pets',
+    ]);
+});
+
+test('inline fragments with interface fields', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                animalOwner {
+                    name
+                }
+                allSpecies {
+                    name
+                    ... on Dog {
+                        breed
+                        name
+                    }
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'Animal.name',
+        'Dog.breed',
+        'Dog.name',
+        'Human.name',
+        'Root.allSpecies',
+        'Root.animalOwner',
+    ]);
+});
+
+//'extractFieldPaths works with fragments', () => {
+//     const fieldPaths = extractFieldPaths(
+//         /* GraphQL */ `
+//             {
+//                 animalOwner {
+//                     name
+//                 }
+//                 pets {
+//                     ...parrotParticulars
+//                     ...catFacts
+//                 }
+//             }
+
+//             fragment parrotParticulars on Parrot {
+//                 wingSpan
+//             }
+
+//             fragment catFacts on Cat {
+//                 favoriteMilkBrand
+//             }
+//         `,
+//         PETS_SCHEMA,
+//     );
+
+//     expect([...fieldPaths].sort()).toEqual([
+//         'Parrot.wingSpan',
+//         'Dog.name',
+//         'Human.name',
+//         'Root.animalOwner',
+//         'Root.pets',
+//     ]);
+// });
+
+// test('extractFieldPaths works with inlind fragments', () => {
+//     const fieldPaths = extractFieldPaths(
+//         /* GraphQL */ `
+//             {
+//                 animalOwner {
+//                     name
+//                 }
+//                 allSpecies {
+//                     ... on Dog {
+//                         name
+//                         breed
+//                     }
+//                     ...catFacts
+//                 }
+//             }
+
+//             fragment doggoDetails on Dog {
+//                 name
+//                 breed
+//             }
+
+//             fragment catFacts on Cat {
+//                 name
+//                 favoriteMilkBrand
+//             }
+//         `,
+//         PETS_SCHEMA,
+//     );
+
+//     expect([...fieldPaths].sort()).toEqual([
+//         'Cat.favoriteMilkBrand',
+//         'Cat.name',
+//         'Dog.breed',
+//         'Dog.name',
+//         'Human.name',
+//         'Root.animalOwner',
+//         'Root.pets',
+//     ]);
+// });

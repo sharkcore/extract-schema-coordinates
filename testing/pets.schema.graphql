@@ -1,0 +1,41 @@
+schema {
+    query: Root
+}
+
+type Root {
+    animalOwner: Human
+    pets: [Pet]
+    allSpecies: [Animal]
+}
+
+interface Animal {
+    name: String
+}
+
+type Dog implements Animal {
+    breed: String
+    name: String
+}
+
+type Cat implements Animal {
+    favoriteMilkBrand: String
+    name: String
+}
+
+type Parrot implements Animal {
+    name: String
+    wingSpan: Int
+}
+
+union Pet = Dog | Cat | Parrot
+
+type Human implements Animal {
+    name: String
+    age: Int
+    contactDetails: ContactDetails
+}
+
+type ContactDetails {
+    phone: String
+    email: String
+}

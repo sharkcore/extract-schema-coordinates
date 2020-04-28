@@ -2,7 +2,13 @@
 
 import invariant from 'assert';
 import memoize from 'lodash.memoize';
-import { parse as _parse, visit, type SelectionSetNode, type OperationDefinitionNode } from 'graphql';
+import {
+    parse as _parse,
+    visit,
+    type SelectionNode,
+    type SelectionSetNode,
+    type OperationDefinitionNode,
+} from 'graphql';
 
 /**
  * A memoized version of graphql's parse function
@@ -97,7 +103,7 @@ export default function extractFieldPaths(
      */
     const operationFieldNameToTypeMap = {
         query: 'Query',
-        muration: 'Mutation',
+        mutation: 'Mutation',
         subscription: 'Subscription',
     };
 
@@ -126,19 +132,37 @@ export default function extractFieldPaths(
     // define a queue for use in our dfs search of the document ast
     const queue: Array<{| type: string, selectionSet: SelectionSetNode |}> = [];
 
-    // enqueue the roots of the document
-    documentAst.definitions
-        .filter((definition) => definition.kind === 'OperationDefinition')
-        .forEach((definition) => {
-            invariant(definition.kind === 'OperationDefinition');
-
+    // Enqueue the roots of the document
+    documentAst.definitions.forEach((definition) => {
+        /**
+         * The root of a query, subscription or mutation operation. Example:
+         *
+         *     query GET_CAT_FACTS {
+         *         ...
+         *     }
+         */
+        if (definition.kind === 'OperationDefinition') {
             // the name of the operation (e.g. 'query')
             const operationName = definition.operation;
             // the name of the root type in the schema this maps to (e.g. 'Query')
             const operationTypeName = operationFieldNameToTypeMap[operationName];
             // enqueue this root
             queue.push({ type: operationTypeName, selectionSet: definition.selectionSet });
-        });
+        }
+
+        /**
+         * A fragment definition. We will also add this root to the queue. Example:
+         *
+         *     fragment doggoDetails on Dog {
+         *         name
+         *         breed
+         *     }
+         */
+        if (definition.kind === 'FragmentDefinition') {
+            const typeName = definition.typeCondition.name.value;
+            queue.push({ type: typeName, selectionSet: definition.selectionSet });
+        }
+    });
 
     invariant(queue.length > 0, 'Expected to find a query or mutation operation in the provided document');
 
@@ -146,21 +170,37 @@ export default function extractFieldPaths(
     while (queue.length > 0) {
         const { type, selectionSet } = queue.pop();
 
-        /**
-         * Check if there are edges on this field to traverse.
-         * If not, we've hit a leaf node (e.g. a primative like String or Int) and won't have any fields)
-         */
-        // istanbul ignore if: TODO work out when this branch is hit
-        if (selectionSet.selections == null) {
-            continue;
-        }
+        selectionSet.selections.forEach((selection: SelectionNode) => {
+            /**
+             * `selection` could be:
+             * - Field (e.g. `Parrot.wingSpan`)
+             * - InlineFragment (e.g. `... on Parrot`)
+             * - FragmentSpread (e.g. `...parrotFacts`)
+             *
+             * @see https://github.com/graphql/graphql-js/blob/278bd/src/language/ast.js#L287
+             */
 
-        selectionSet.selections.forEach((selection) => {
-            invariant(selection.kind === 'Field');
+            if (selection.kind === 'InlineFragment') {
+                /**
+                 * TODO: Work out if this will ever not be the case?
+                 * It's unclear why typeCondition is a maybe type.
+                 * @see https://github.com/graphql/graphql-js/blob/278bde/src/language/ast.js#L318
+                 */
+                invariant(
+                    selection.typeCondition != null,
+                    "Inline fragment doesn't appear to have a type conition set",
+                );
+                queue.push({ type: selection.typeCondition.name.value, selectionSet: selection.selectionSet });
+                return;
+            }
 
-            // Add this path to the set
             const fieldName = selection.name.value;
-            fieldPaths.add(`${type}.${fieldName}`);
+
+            // TODO: Add an option to allow fragment names to show up as attributes?
+            if (selection.kind !== 'FragmentSpread') {
+                // Add this path to the set
+                fieldPaths.add(`${type}.${fieldName}`);
+            }
 
             if (selection.selectionSet != null) {
                 /**
@@ -181,10 +221,17 @@ export default function extractFieldPaths(
                      * TODO: add an option to throw an error in this case
                      */
                 } else {
-                    queue.push({
-                        type: fieldType.type,
-                        selectionSet: selection.selectionSet,
-                    });
+                    /**
+                     * Check if there are edges on this field to traverse.
+                     * If not, we've hit a leaf node (e.g. a primative like String or Int) and won't have any fields)
+                     */
+                    /* istanbul ignore else: is the else branch ever hit?? */
+                    if (selection.selectionSet != null) {
+                        queue.push({
+                            type: fieldType.type,
+                            selectionSet: selection.selectionSet,
+                        });
+                    }
                 }
             }
         });
