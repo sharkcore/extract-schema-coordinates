@@ -3,7 +3,7 @@ import path from 'path';
 import { extractFieldPaths } from '../src';
 const PETS_SCHEMA = fs.readFileSync(path.join(__dirname, '../testing/pets.schema.graphql'), 'utf8');
 
-test('extractFieldPaths works for basic query', () => {
+test('basic query', () => {
     const fieldPaths = extractFieldPaths(
         /* GraphQL */ `
             {
@@ -26,7 +26,51 @@ test('extractFieldPaths works for basic query', () => {
     ]);
 });
 
-test('extractFieldPaths works for multiple operations', () => {
+test('basic mutation', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            mutation {
+                addCat(name: "Palmerston") {
+                    name
+                    favoriteMilkBrand
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual(['Cat.favoriteMilkBrand', 'Cat.name', 'Mutation.addCat']);
+});
+
+test('extended types', () => {
+    const fieldPaths = extractFieldPaths(
+        /* GraphQL */ `
+            {
+                animalOwner {
+                    name
+                    contactDetails {
+                        email
+                        address {
+                            zip
+                        }
+                    }
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldPaths].sort()).toEqual([
+        'Address.zip',
+        'ContactDetails.address',
+        'ContactDetails.email',
+        'Human.contactDetails',
+        'Human.name',
+        'Root.animalOwner',
+    ]);
+});
+
+test('multiple operations', () => {
     const fieldPaths = extractFieldPaths(
         /* GraphQL */ `
             {

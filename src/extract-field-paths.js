@@ -1,13 +1,14 @@
 // @flow
 
+import util from 'util';
 import invariant from 'assert';
 import memoize from 'lodash.memoize';
 import {
+    getOperationRootType,
     parse as _parse,
-    visit,
+    buildSchema as _buildSchema,
     type SelectionNode,
     type SelectionSetNode,
-    type OperationDefinitionNode,
 } from 'graphql';
 
 /**
@@ -15,6 +16,12 @@ import {
  * @see https://graphql.org/graphql-js/language/#parse
  */
 const parse = memoize(_parse);
+
+/**
+ * A memoized version of graphql's parse function
+ * @see https://graphql.org/graphql-js/utilities/#buildschema
+ */
+const buildSchema = memoize(_buildSchema);
 
 /**
  * Recursively unwrap a type object to get the human readable type name
@@ -26,7 +33,7 @@ function getTypeNameFromType(type): string {
     }
 
     // Tell flow that we exhausted the search for the NamedType
-    invariant(type.kind === 'NamedType');
+    invariant(type.kind === 'NamedType', `Expected ${util.inspect(type)} to be a NamedType`);
 
     return type.name.value;
 }
@@ -66,8 +73,8 @@ export default function extractFieldPaths(
      */
     schemaText: string,
 ): Set<string> {
-    // Turn the provided schema text (SDL) into an AST
-    const schemaAst = parse(schemaText);
+    // Turn the provided schema text (SDL) into a GraphQLSchema object and AST
+    const builtSchema = buildSchema(schemaText);
 
     /**
      * Contruct a map of type names in the schema to the fields they contain.
@@ -95,36 +102,34 @@ export default function extractFieldPaths(
      */
     const typeToFieldsMap = {};
 
-    /**
-     * Construct a map of operation field name (e.g. "query") -> root type (e.g. "Query")
-     * Use the defaults for where to look for the root operations
-     * @see http://spec.graphql.org/draft/#sec-Root-Operation-Types.Default-Root-Operation-Type-Names
-     * (Values here may be overriden when we parse the AST)
-     */
-    const operationFieldNameToTypeMap = {
-        query: 'Query',
-        mutation: 'Mutation',
-        subscription: 'Subscription',
-    };
+    for (const typeName in builtSchema.getTypeMap()) {
+        // Awkwardly using for...in syntax instead of Object.entires or something functional to preserve typing
+        // (`Object.entires` et al currently gobbles up in type information in Flow)
+        const type = builtSchema.getTypeMap()[typeName];
 
-    visit(schemaAst, {
-        leave: {
-            ObjectTypeDefinition: (node) => {
-                // istanbul ignore else: node.fields is a maybe type
-                if (node.fields != null) {
-                    typeToFieldsMap[node.name.value] = node.fields.map(({ name, type }) => ({
-                        field: name.value,
-                        type: getTypeNameFromType(type),
-                    }));
-                }
-            },
-            SchemaDefinition: (node) => {
-                node.operationTypes.forEach(({ operation, type }) => {
-                    operationFieldNameToTypeMap[operation] = type.name.value;
+        // Initialize the entry for the type in typeToFieldsMap
+        typeToFieldsMap[type.name] = [];
+
+        // Check if the field has types
+        if (typeof type.getFields !== 'function') {
+            continue;
+        }
+
+        // Loop through the fields on the type to add to the fields array in typeToFieldsMap
+        for (let fieldName in type.getFields()) {
+            // Awkwardly using for...in syntax instead of Object.entires or something functional to preserve typing
+            // (`Object.entires` et al currently gobbles up in type information in Flow)
+            const field = type.getFields()[fieldName];
+
+            // Not every field has an astNode attatched (e.g. __Schema's fields)
+            if (field.astNode != null) {
+                typeToFieldsMap[type.name].push({
+                    field: field.name,
+                    type: getTypeNameFromType(field.astNode.type),
                 });
-            },
-        },
-    });
+            }
+        }
+    }
 
     const documentAst = parse(documentText);
     const fieldPaths = new Set<string>();
@@ -142,12 +147,8 @@ export default function extractFieldPaths(
          *     }
          */
         if (definition.kind === 'OperationDefinition') {
-            // the name of the operation (e.g. 'query')
-            const operationName = definition.operation;
-            // the name of the root type in the schema this maps to (e.g. 'Query')
-            const operationTypeName = operationFieldNameToTypeMap[operationName];
-            // enqueue this root
-            queue.push({ type: operationTypeName, selectionSet: definition.selectionSet });
+            const { name: typeName } = getOperationRootType(builtSchema, definition);
+            queue.push({ type: typeName, selectionSet: definition.selectionSet });
         }
 
         /**

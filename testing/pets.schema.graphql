@@ -1,11 +1,21 @@
 schema {
     query: Root
+    mutation: Mutation
+    subscription: Subscription
 }
 
 type Root {
     animalOwner: Human
     pets: [Pet]
     allSpecies: [Animal]
+}
+
+type Mutation {
+    addCat(name: String!): Cat!
+}
+
+type Subscription {
+    catAdded(name: String!): Cat!
 }
 
 interface Animal {
@@ -38,4 +48,13 @@ type Human implements Animal {
 type ContactDetails {
     phone: String
     email: String
+}
+
+extend type ContactDetails {
+    address: Address
+}
+
+type Address {
+    streetNumber: Int
+    zip: String
 }
