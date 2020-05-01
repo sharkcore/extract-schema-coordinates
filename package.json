@@ -1,6 +1,6 @@
 {
     "name": "extract-field-paths",
-    "version": "0.0.6",
+    "version": "1.0.0",
     "description": "extract field paths from GraphQL documents",
     "main": "lib/extract-field-paths.js",
     "repository": "git@github.com:sharkcore/extract-field-paths.git",
