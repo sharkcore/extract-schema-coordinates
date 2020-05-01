@@ -1,9 +1,9 @@
 {
-    "name": "graphql-document-tools",
+    "name": "extract-field-paths",
     "version": "0.0.6",
-    "description": "functions to extract information about graphql queries",
-    "main": "lib/index.js",
-    "repository": "git@github.com:sharkcore/graphql-document-tools.git",
+    "description": "extract field paths from GraphQL documents",
+    "main": "lib/extract-field-paths.js",
+    "repository": "git@github.com:sharkcore/extract-field-paths.git",
     "author": "Mark Larah <mark@larah.me>",
     "license": "MIT",
     "private": false,

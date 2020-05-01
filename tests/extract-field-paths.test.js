@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { extractFieldPaths } from '../src';
+import extractFieldPaths from '../src/extract-field-paths';
 const PETS_SCHEMA = fs.readFileSync(path.join(__dirname, '../testing/pets.schema.graphql'), 'utf8');
 
 test('basic query', () => {
