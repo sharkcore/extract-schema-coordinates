@@ -1,20 +1,17 @@
-# graphql-document-tools
+# extract-field-paths
 
-Tools to perform analysis on GraphQL documents.
+[![npm (scoped)](https://img.shields.io/npm/v/@sharkcore/extract-field-paths.svg)](https://yarn.pm/@sharkcore/extract-field-paths)
+[![Build Status](https://travis-ci.org/sharkcore/extract-field-paths.svg?branch=master)](https://travis-ci.org/sharkcore/extract-field-paths)
+
+Statically extract a list of field "paths" contained in a GraphQL document
 
 ## Install
 
 ```bash
-$ yarn add --dev graphql-document-tools
+$ yarn add --dev extract-field-paths
 ```
 
-## Usage
-
-`graphql-document-tools` exports the following functions:
-
-### extractFieldPaths
-
-Extracts a list of field "paths" contained in a GraphQL document.
+## Example
 
 e.g. for the following query:
 
@@ -35,7 +32,7 @@ We would return the following set of field paths:
 ["Query.business", "Business.name", "Business.location", "Location.city"]
 ```
 
-#### API
+## API
 
 ```
 extractFieldPaths(
@@ -51,9 +48,9 @@ extractFieldPaths(
 ): Set<string>
 ```
 
-Sample Usage:
+### Sample Usage:
 
 ```js
-import { extractFieldPaths } from 'graphql-document-tools';
+import extractFieldPaths from 'extract-field-paths';
 const fieldPaths = extractFieldPaths(schemaText, documentString);
 ```
