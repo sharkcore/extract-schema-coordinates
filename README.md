@@ -52,5 +52,5 @@ extractFieldPaths(
 
 ```js
 import extractFieldPaths from 'extract-field-paths';
-const fieldPaths = extractFieldPaths(schemaText, documentString);
+const fieldPaths = extractFieldPaths(documentString, schemaText);
 ```
