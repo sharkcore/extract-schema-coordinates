@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/extract-field-paths.svg)](https://yarn.pm/extract-field-paths)
 [![Build Status](https://travis-ci.org/sharkcore/extract-field-paths.svg?branch=master)](https://travis-ci.org/sharkcore/extract-field-paths)
 
-Statically extract a list of field "paths" contained in a GraphQL document
+Statically extract a list of field "paths" (type and field pairs) contained in a GraphQL document.
 
 ## Install
 
