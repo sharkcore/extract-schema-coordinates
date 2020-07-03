@@ -1,14 +1,14 @@
-# extract-field-paths
+# extract-field-coordinates
 
-[![npm](https://img.shields.io/npm/v/extract-field-paths.svg)](https://yarn.pm/extract-field-paths)
-[![Build Status](https://travis-ci.org/sharkcore/extract-field-paths.svg?branch=master)](https://travis-ci.org/sharkcore/extract-field-paths)
+[![npm](https://img.shields.io/npm/v/extract-field-paths.svg)](https://yarn.pm/extract-field-coordinates)
+[![Build Status](https://travis-ci.org/sharkcore/extract-field-paths.svg?branch=master)](https://travis-ci.org/sharkcore/extract-field-coordinates)
 
 Statically extract a list of field "paths" (type and field pairs) contained in a GraphQL document.
 
 ## Install
 
 ```bash
-$ yarn add --dev extract-field-paths
+$ yarn add --dev extract-field-coordinates
 ```
 
 ## Example
@@ -51,6 +51,6 @@ extractFieldPaths(
 ### Sample Usage:
 
 ```js
-import extractFieldPaths from 'extract-field-paths';
-const fieldPaths = extractFieldPaths(documentString, schemaText);
+import extractFieldCoordinates from 'extract-field-coordinates';
+const fieldCoordinates = extractFieldCoordinates(documentString, schemaText);
 ```
