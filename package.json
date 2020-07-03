@@ -1,9 +1,9 @@
 {
-    "name": "extract-field-paths",
+    "name": "extract-field-coordinates",
     "version": "1.0.0",
-    "description": "extract field paths from GraphQL documents",
-    "main": "lib/extract-field-paths.js",
-    "repository": "git@github.com:sharkcore/extract-field-paths.git",
+    "description": "extract field coordinates from GraphQL documents",
+    "main": "lib/extract-field-coordinates.js",
+    "repository": "git@github.com:sharkcore/extract-field-coordinates.git",
     "author": "Mark Larah <mark@larah.me>",
     "license": "MIT",
     "private": false,

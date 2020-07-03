@@ -23,4 +23,4 @@ deploy:
     on:
         branch: master
         tags: true
-        repo: sharkcore/extract-field-paths
+        repo: sharkcore/extract-field-coordinates

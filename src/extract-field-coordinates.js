@@ -39,7 +39,7 @@ function getTypeNameFromType(type): string {
 }
 
 /**
- * Extracts a list of field "paths" contained in a GraphQL document.
+ * Extracts a list of field "coordinates" contained in a GraphQL document.
 
  * Example - for the following query:
  * ```graphql
@@ -62,7 +62,7 @@ function getTypeNameFromType(type): string {
  *   "Location.city"
  * ]
  */
-export default function extractFieldPaths(
+export default function extractFieldCoordinates(
     /**
      * The text of the document to analyse, in raw string format
      */
@@ -132,7 +132,7 @@ export default function extractFieldPaths(
     }
 
     const documentAst = parse(documentText);
-    const fieldPaths = new Set<string>();
+    const fieldCoordinates = new Set<string>();
 
     // define a queue for use in our dfs search of the document ast
     const queue: Array<{| type: string, selectionSet: SelectionSetNode |}> = [];
@@ -200,7 +200,7 @@ export default function extractFieldPaths(
             // TODO: Add an option to allow fragment names to show up as attributes?
             if (selection.kind !== 'FragmentSpread') {
                 // Add this path to the set
-                fieldPaths.add(`${type}.${fieldName}`);
+                fieldCoordinates.add(`${type}.${fieldName}`);
             }
 
             if (selection.selectionSet != null) {
@@ -258,5 +258,5 @@ export default function extractFieldPaths(
         });
     }
 
-    return fieldPaths;
+    return fieldCoordinates;
 }

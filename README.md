@@ -1,9 +1,9 @@
 # extract-field-coordinates
 
-[![npm](https://img.shields.io/npm/v/extract-field-paths.svg)](https://yarn.pm/extract-field-coordinates)
-[![Build Status](https://travis-ci.org/sharkcore/extract-field-paths.svg?branch=master)](https://travis-ci.org/sharkcore/extract-field-coordinates)
+[![npm (scoped)](https://img.shields.io/npm/v/@sharkcore/extract-field-coordinates.svg)](https://yarn.pm/@sharkcore/extract-field-coordinates)
+[![Build Status](https://travis-ci.org/sharkcore/extract-field-coordinates.svg?branch=master)](https://travis-ci.org/sharkcore/extract-field-coordinates)
 
-Statically extract a list of field "paths" (type and field pairs) contained in a GraphQL document.
+Statically extract a list of "field coordinates" contained in a GraphQL document
 
 ## Install
 
@@ -26,7 +26,7 @@ query GET_BUSINESS($BizId: String) {
 }
 ```
 
-We would return the following set of field paths:
+We would return the following set of field coordinates:
 
 ```json
 ["Query.business", "Business.name", "Business.location", "Location.city"]
@@ -35,7 +35,7 @@ We would return the following set of field paths:
 ## API
 
 ```
-extractFieldPaths(
+extractFieldCoordinates(
     /**
      * The text of the document to analyse, in raw string format
      */

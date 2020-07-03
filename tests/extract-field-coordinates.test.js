@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import extractFieldPaths from '../src/extract-field-paths';
+import extractFieldCoordinates from '../src/extract-field-coordinates';
 const PETS_SCHEMA = fs.readFileSync(path.join(__dirname, '../testing/pets.schema.graphql'), 'utf8');
 
 test('basic query', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -18,7 +18,7 @@ test('basic query', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'ContactDetails.email',
         'Human.contactDetails',
         'Human.name',
@@ -27,7 +27,7 @@ test('basic query', () => {
 });
 
 test('basic mutation', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             mutation {
                 addCat(name: "Palmerston") {
@@ -39,11 +39,11 @@ test('basic mutation', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual(['Cat.favoriteMilkBrand', 'Cat.name', 'Mutation.addCat']);
+    expect([...fieldCoordinates].sort()).toEqual(['Cat.favoriteMilkBrand', 'Cat.name', 'Mutation.addCat']);
 });
 
 test('extended types', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -60,7 +60,7 @@ test('extended types', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'Address.zip',
         'ContactDetails.address',
         'ContactDetails.email',
@@ -71,7 +71,7 @@ test('extended types', () => {
 });
 
 test('multiple operations', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -89,7 +89,7 @@ test('multiple operations', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'ContactDetails.email',
         'Human.contactDetails',
         'Human.name',
@@ -98,7 +98,7 @@ test('multiple operations', () => {
 });
 
 test('includes non-existant fields (e.g. for outdated schemas) as leaf nodes', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -113,7 +113,7 @@ test('includes non-existant fields (e.g. for outdated schemas) as leaf nodes', (
         `,
         PETS_SCHEMA,
     );
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'ContactDetails.I_DONT_EXIST',
         'ContactDetails.email',
         'Human.I_DONT_EXIST',
@@ -124,7 +124,7 @@ test('includes non-existant fields (e.g. for outdated schemas) as leaf nodes', (
 });
 
 test('includes non-existant fields (e.g. for outdated schemas) as non-leaf nodes', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -142,7 +142,7 @@ test('includes non-existant fields (e.g. for outdated schemas) as non-leaf nodes
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'ContactDetails.I_DONT_EXIST',
         'ContactDetails.email',
         'Human.contactDetails',
@@ -152,7 +152,7 @@ test('includes non-existant fields (e.g. for outdated schemas) as non-leaf nodes
 });
 
 test('fragments', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -183,7 +183,7 @@ test('fragments', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'Cat.favoriteMilkBrand',
         'Cat.name',
         'Dog.breed',
@@ -196,7 +196,7 @@ test('fragments', () => {
 });
 
 test('fragments with interface fields', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -216,7 +216,7 @@ test('fragments with interface fields', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'Animal.name',
         'Dog.breed',
         'Dog.name',
@@ -227,7 +227,7 @@ test('fragments with interface fields', () => {
 });
 
 test('inline fragments', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -252,7 +252,7 @@ test('inline fragments', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'Cat.favoriteMilkBrand',
         'Cat.name',
         'Dog.breed',
@@ -265,7 +265,7 @@ test('inline fragments', () => {
 });
 
 test('inline fragments with interface fields', () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -283,7 +283,7 @@ test('inline fragments with interface fields', () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual([
+    expect([...fieldCoordinates].sort()).toEqual([
         'Animal.name',
         'Dog.breed',
         'Dog.name',
@@ -294,7 +294,7 @@ test('inline fragments with interface fields', () => {
 });
 
 test("copes with types that don't exist in the schema", () => {
-    const fieldPaths = extractFieldPaths(
+    const fieldCoordinates = extractFieldCoordinates(
         /* GraphQL */ `
             {
                 allSpecies {
@@ -310,5 +310,5 @@ test("copes with types that don't exist in the schema", () => {
         PETS_SCHEMA,
     );
 
-    expect([...fieldPaths].sort()).toEqual(['Animal.name', 'Root.allSpecies', 'Snake.skin']);
+    expect([...fieldCoordinates].sort()).toEqual(['Animal.name', 'Root.allSpecies', 'Snake.skin']);
 });
