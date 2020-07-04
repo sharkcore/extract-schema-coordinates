@@ -1,7 +1,7 @@
 # extract-field-coordinates
 
-[![npm (scoped)](https://img.shields.io/npm/v/@sharkcore/extract-field-coordinates.svg)](https://yarn.pm/@sharkcore/extract-field-coordinates)
-[![Build Status](https://travis-ci.org/sharkcore/extract-field-coordinates.svg?branch=master)](https://travis-ci.org/sharkcore/extract-field-coordinates)
+[![npm (scoped)](https://img.shields.io/npm/v/extract-field-coordinates.svg)](https://yarnpkg.com/package/extract-field-coordinates)
+[![Build Status](https://travis-ci.com/sharkcore/extract-field-coordinates.svg?branch=master)](https://travis-ci.com/sharkcore/extract-field-coordinates)
 
 Statically extract a list of "field coordinates" contained in a GraphQL document
 
