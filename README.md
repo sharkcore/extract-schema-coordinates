@@ -1,6 +1,6 @@
 # extract-schema-coordinates
 
-Statically extract a list of "schema coordinates" contained in a GraphQL document
+Extract a list of "schema coordinates" contained in a GraphQL document
 
 ## Install
 
