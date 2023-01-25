@@ -5,7 +5,7 @@ Extract a list of "schema coordinates" contained in a GraphQL document
 ## Install
 
 ```bash
-$ yarn add --dev extract-schema-coordinates
+$ yarn add extract-schema-coordinates
 ```
 
 ## Example
