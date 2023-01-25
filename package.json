@@ -1,6 +1,6 @@
 {
     "name": "extract-field-coordinates",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "extract field coordinates from GraphQL documents",
     "main": "lib/extract-field-coordinates.js",
     "repository": "git@github.com:sharkcore/extract-field-coordinates.git",

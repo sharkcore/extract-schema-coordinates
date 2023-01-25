@@ -312,3 +312,16 @@ test("copes with types that don't exist in the schema", () => {
 
     expect([...fieldCoordinates].sort()).toEqual(['Animal.name', 'Root.allSpecies', 'Snake.skin']);
 });
+
+test('shows inputs', () => {
+    const fieldCoordinates = extractFieldCoordinates(
+        /* GraphQL */ `
+            mutation AddVet($vetInfo: VetDetailsInput!, $somethingElse: String!) {
+                addVet(details: $vetInfo)
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldCoordinates].sort()).toEqual(['Mutation.addVet', 'VetDetailsInput']);
+});

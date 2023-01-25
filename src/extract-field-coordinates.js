@@ -23,6 +23,8 @@ const parse = memoize(_parse);
  */
 const buildSchema = memoize(_buildSchema);
 
+const builtInScalars = new Set(['Int', 'Float', 'String', 'Boolean', 'ID']);
+
 /**
  * Recursively unwrap a type object to get the human readable type name
  * TODO: Replace this with getNamedType from graphql-js
@@ -149,6 +151,16 @@ export default function extractFieldCoordinates(
         if (definition.kind === 'OperationDefinition') {
             const { name: typeName } = getOperationRootType(builtSchema, definition);
             queue.push({ type: typeName, selectionSet: definition.selectionSet });
+
+            // Any custom inputs should show up as a schema coordinate, and will be defined
+            // in the operation ast node.
+            definition.variableDefinitions.forEach((variable) => {
+                const variableTypeName = getTypeNameFromType(variable);
+                // don't add built-in scalar input types
+                if (!builtInScalars.has(variableTypeName)) {
+                    fieldCoordinates.add(variableTypeName);
+                }
+            });
         }
 
         /**

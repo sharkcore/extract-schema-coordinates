@@ -12,10 +12,17 @@ type Root {
 
 type Mutation {
     addCat(name: String!): Cat!
+    addVet(details: VetDetailsInput!): Boolean!
 }
 
 type Subscription {
     catAdded(name: String!): Cat!
+}
+
+input VetDetailsInput {
+    name: String!
+    address: String!
+    phone: String!
 }
 
 interface Animal {
