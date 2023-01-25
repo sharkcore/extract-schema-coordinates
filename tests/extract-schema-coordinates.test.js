@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import extractFieldCoordinates from '../src/extract-field-coordinates';
+import extractSchemaCoordinates from '../src/extract-schema-coordinates';
 const PETS_SCHEMA = fs.readFileSync(path.join(__dirname, '../testing/pets.schema.graphql'), 'utf8');
 
 test('basic query', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -27,7 +27,7 @@ test('basic query', () => {
 });
 
 test('basic mutation', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             mutation {
                 addCat(name: "Palmerston") {
@@ -43,7 +43,7 @@ test('basic mutation', () => {
 });
 
 test('extended types', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -71,7 +71,7 @@ test('extended types', () => {
 });
 
 test('multiple operations', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -98,7 +98,7 @@ test('multiple operations', () => {
 });
 
 test('includes non-existant fields (e.g. for outdated schemas) as leaf nodes', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -124,7 +124,7 @@ test('includes non-existant fields (e.g. for outdated schemas) as leaf nodes', (
 });
 
 test('includes non-existant fields (e.g. for outdated schemas) as non-leaf nodes', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -152,7 +152,7 @@ test('includes non-existant fields (e.g. for outdated schemas) as non-leaf nodes
 });
 
 test('fragments', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -196,7 +196,7 @@ test('fragments', () => {
 });
 
 test('fragments with interface fields', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -227,7 +227,7 @@ test('fragments with interface fields', () => {
 });
 
 test('inline fragments', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -265,7 +265,7 @@ test('inline fragments', () => {
 });
 
 test('inline fragments with interface fields', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 animalOwner {
@@ -294,7 +294,7 @@ test('inline fragments with interface fields', () => {
 });
 
 test("copes with types that don't exist in the schema", () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             {
                 allSpecies {
@@ -314,7 +314,7 @@ test("copes with types that don't exist in the schema", () => {
 });
 
 test('shows inputs', () => {
-    const fieldCoordinates = extractFieldCoordinates(
+    const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
             mutation AddVet($vetInfo: VetDetailsInput!, $somethingElse: String!) {
                 addVet(details: $vetInfo)

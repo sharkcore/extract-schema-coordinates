@@ -41,7 +41,7 @@ function getTypeNameFromType(type): string {
 }
 
 /**
- * Extracts a list of field "coordinates" contained in a GraphQL document.
+ * Extracts a list of schema "coordinates" contained in a GraphQL document.
 
  * Example - for the following query:
  * ```graphql
@@ -64,7 +64,7 @@ function getTypeNameFromType(type): string {
  *   "Location.city"
  * ]
  */
-export default function extractFieldCoordinates(
+export default function extractSchemaCoordinates(
     /**
      * The text of the document to analyse, in raw string format
      */
@@ -134,7 +134,7 @@ export default function extractFieldCoordinates(
     }
 
     const documentAst = parse(documentText);
-    const fieldCoordinates = new Set<string>();
+    const schemaCoordinates = new Set<string>();
 
     // define a queue for use in our dfs search of the document ast
     const queue: Array<{| type: string, selectionSet: SelectionSetNode |}> = [];
@@ -158,7 +158,7 @@ export default function extractFieldCoordinates(
                 const variableTypeName = getTypeNameFromType(variable);
                 // don't add built-in scalar input types
                 if (!builtInScalars.has(variableTypeName)) {
-                    fieldCoordinates.add(variableTypeName);
+                    schemaCoordinates.add(variableTypeName);
                 }
             });
         }
@@ -212,7 +212,7 @@ export default function extractFieldCoordinates(
             // TODO: Add an option to allow fragment names to show up as attributes?
             if (selection.kind !== 'FragmentSpread') {
                 // Add this path to the set
-                fieldCoordinates.add(`${type}.${fieldName}`);
+                schemaCoordinates.add(`${type}.${fieldName}`);
             }
 
             if (selection.selectionSet != null) {
@@ -270,5 +270,5 @@ export default function extractFieldCoordinates(
         });
     }
 
-    return fieldCoordinates;
+    return schemaCoordinates;
 }

@@ -1,14 +1,11 @@
-# extract-field-coordinates
-
-[![npm (scoped)](https://img.shields.io/npm/v/extract-field-coordinates.svg)](https://yarnpkg.com/package/extract-field-coordinates)
-[![Build Status](https://travis-ci.com/sharkcore/extract-field-coordinates.svg?branch=master)](https://travis-ci.com/sharkcore/extract-field-coordinates)
+# extract-schema-coordinates
 
 Statically extract a list of "field coordinates" contained in a GraphQL document
 
 ## Install
 
 ```bash
-$ yarn add --dev extract-field-coordinates
+$ yarn add --dev extract-schema-coordinates
 ```
 
 ## Example
@@ -35,7 +32,7 @@ We would return the following set of field coordinates:
 ## API
 
 ```
-extractFieldCoordinates(
+extractSchemaCoordinates(
     /**
      * The text of the document to analyse, in raw string format
      */
@@ -48,9 +45,9 @@ extractFieldCoordinates(
 ): Set<string>
 ```
 
-### Sample Usage:
+### Usage:
 
 ```js
-import extractFieldCoordinates from 'extract-field-coordinates';
-const fieldCoordinates = extractFieldCoordinates(documentString, schemaText);
+import extractSchemaCoordinates from 'extract-schema-coordinates';
+const schemaCoordinates = extractSchemaCoordinates(documentString, schemaText);
 ```
