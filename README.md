@@ -1,6 +1,6 @@
 # extract-schema-coordinates
 
-Statically extract a list of "field coordinates" contained in a GraphQL document
+Statically extract a list of "schema coordinates" contained in a GraphQL document
 
 ## Install
 
@@ -23,7 +23,7 @@ query GET_BUSINESS($BizId: String) {
 }
 ```
 
-We would return the following set of field coordinates:
+We would return the following set of schema coordinates:
 
 ```json
 ["Query.business", "Business.name", "Business.location", "Location.city"]
@@ -49,5 +49,5 @@ extractSchemaCoordinates(
 
 ```js
 import extractSchemaCoordinates from 'extract-schema-coordinates';
-const schemaCoordinates = extractSchemaCoordinates(documentString, schemaText);
+const coordinates = extractSchemaCoordinates(documentString, schemaText);
 ```
