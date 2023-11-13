@@ -1,7 +1,6 @@
 schema {
     query: Root
     mutation: Mutation
-    subscription: Subscription
 }
 
 type Root {
@@ -13,10 +12,6 @@ type Root {
 type Mutation {
     addCat(name: String!): Cat!
     addVet(details: VetDetailsInput!): Boolean!
-}
-
-type Subscription {
-    catAdded(name: String!): Cat!
 }
 
 input VetDetailsInput {

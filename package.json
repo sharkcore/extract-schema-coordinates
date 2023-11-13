@@ -1,37 +1,48 @@
 {
     "name": "extract-schema-coordinates",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "description": "extract schema coordinates from GraphQL documents",
-    "main": "lib/extract-schema-coordinates.js",
+    "type": "module",
+    "exports": {
+        ".": {
+            "require": "./lib/extract-schema-coordinates.cjs",
+            "import": "./lib/extract-schema-coordinates.js"
+        }
+    },
     "repository": "git@github.com:sharkcore/extract-schema-coordinates.git",
     "author": "Mark Larah <mark@larah.me>",
     "license": "MIT",
     "private": false,
     "scripts": {
-        "build": "babel src --out-dir lib --source-maps true",
-        "test": "jest"
+        "build": "npx tsup-node src/extract-schema-coordinates.ts --dts --format esm,cjs --out-dir lib",
+        "typecheck": "npx tsup-node src/extract-schema-coordinates.ts --dts-only",
+        "postinstall": "npx husky install",
+        "test": "NODE_OPTIONS=--experimental-vm-modules  jest"
     },
     "devDependencies": {
-        "@babel/cli": "^7.8.4",
-        "@babel/core": "^7.9.0",
-        "@babel/preset-env": "^7.9.5",
-        "@babel/preset-flow": "^7.9.0",
-        "flow-bin": "^0.123.0",
-        "flow-copy-source": "^2.0.9",
-        "husky": "^4.2.5",
-        "jest": "^25.4.0",
-        "prettier": "^2.0.5",
-        "pretty-quick": "^2.0.1"
+        "@tsconfig/node18": "^18.2.2",
+        "@tsconfig/strictest": "^2.0.2",
+        "@types/jest": "^29.5.8",
+        "@types/lodash.memoize": "^4.1.9",
+        "@types/node": "^20.9.0",
+        "find-up": "^6.3.0",
+        "husky": "8.x",
+        "jest": "29.x",
+        "lint-staged": "15.x",
+        "nano-staged": "^0.8.0",
+        "parcel": "2.x",
+        "prettier": "3.x",
+        "ts-jest": "^29.1.1",
+        "tsup": "7.x",
+        "typescript": "5.x"
     },
     "dependencies": {
         "core-js": "3",
-        "graphql": "^15.0.0",
-        "lodash.memoize": "^4.1.2"
+        "graphql": "16.x",
+        "lodash.memoize": "4.x"
     },
-    "husky": {
-        "hooks": {
-            "pre-commit": "pretty-quick --staged"
-        }
+    "nano-staged": {
+        "*.{js,ts,json}": "prettier --write"
     },
     "files": [
         "lib"

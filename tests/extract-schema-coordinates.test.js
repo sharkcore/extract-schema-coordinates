@@ -1,7 +1,11 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { expect, test } from '@jest/globals';
+import { findUpSync } from 'find-up';
 import extractSchemaCoordinates from '../src/extract-schema-coordinates';
-const PETS_SCHEMA = fs.readFileSync(path.join(__dirname, '../testing/pets.schema.graphql'), 'utf8');
+
+const ROOT = path.dirname(findUpSync('package.json'));
+const PETS_SCHEMA = fs.readFileSync(path.join(ROOT, 'testing/pets.schema.graphql'), 'utf8');
 
 test('basic query', () => {
     const fieldCoordinates = extractSchemaCoordinates(
@@ -293,6 +297,23 @@ test('inline fragments with interface fields', () => {
     ]);
 });
 
+test('inline fragments without a type condition', () => {
+    const fieldCoordinates = extractSchemaCoordinates(
+        /* GraphQL */ `
+            query Foo($expandedInfo: Boolean) {
+                allSpecies {
+                    ... @include(if: $expandedInfo) {
+                        name
+                    }
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldCoordinates].sort()).toEqual(['Animal.name', 'Root.allSpecies']);
+});
+
 test("copes with types that don't exist in the schema", () => {
     const fieldCoordinates = extractSchemaCoordinates(
         /* GraphQL */ `
@@ -324,4 +345,32 @@ test('shows inputs', () => {
     );
 
     expect([...fieldCoordinates].sort()).toEqual(['Mutation.addVet', 'VetDetailsInput']);
+});
+
+test('throws error on unsupported operation types', () => {
+    const fieldCoordinates = extractSchemaCoordinates(
+        /* GraphQL */ `
+            mutation AddCat($name: String) {
+                addCat(name: $name) {
+                    name
+                }
+            }
+        `,
+        PETS_SCHEMA,
+    );
+
+    expect([...fieldCoordinates].sort()).toEqual(['Cat.name', 'Mutation.addCat']);
+});
+
+test('throws error on unsupported operation types', () => {
+    expect(() =>
+        extractSchemaCoordinates(
+            /* GraphQL */ `
+                subscription Foo {
+                    bar
+                }
+            `,
+            PETS_SCHEMA,
+        ),
+    ).toThrow(/Schema is not configured to execute subscription/);
 });

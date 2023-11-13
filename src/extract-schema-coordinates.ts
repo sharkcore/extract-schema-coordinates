@@ -1,12 +1,12 @@
-// @flow
-
-import util from 'util';
-import invariant from 'assert';
+import util from 'node:util';
+import assert from 'node:assert';
 import memoize from 'lodash.memoize';
 import {
-    getOperationRootType,
     parse as _parse,
     buildSchema as _buildSchema,
+    GraphQLError,
+    Kind,
+    isObjectType,
     type SelectionNode,
     type SelectionSetNode,
 } from 'graphql';
@@ -29,13 +29,13 @@ const builtInScalars = new Set(['Int', 'Float', 'String', 'Boolean', 'ID']);
  * Recursively unwrap a type object to get the human readable type name
  * TODO: Replace this with getNamedType from graphql-js
  */
-function getTypeNameFromType(type): string {
+function getTypeNameFromType(type: any): string {
     if (type.type != null) {
         return getTypeNameFromType(type.type);
     }
 
     // Tell flow that we exhausted the search for the NamedType
-    invariant(type.kind === 'NamedType', `Expected ${util.inspect(type)} to be a NamedType`);
+    assert(type.kind === 'NamedType', `Expected ${util.inspect(type)} to be a NamedType`);
 
     return type.name.value;
 }
@@ -102,45 +102,27 @@ export default function extractSchemaCoordinates(
      * }
      * ```
      */
-    const typeToFieldsMap = {};
+    const typeToFieldsMap: Record<string, Array<{ field: string; type: string }>> = {};
 
-    for (const typeName in builtSchema.getTypeMap()) {
-        // Awkwardly using for...in syntax instead of Object.entires or something functional to preserve typing
-        // (`Object.entires` et al currently gobbles up in type information in Flow)
-        const type = builtSchema.getTypeMap()[typeName];
+    Object.values(builtSchema.getTypeMap()).forEach(type => {
+        if (!isObjectType(type)) return;
 
-        // Initialize the entry for the type in typeToFieldsMap
-        typeToFieldsMap[type.name] = [];
-
-        // Check if the field has types
-        if (typeof type.getFields !== 'function') {
-            continue;
-        }
-
-        // Loop through the fields on the type to add to the fields array in typeToFieldsMap
-        for (let fieldName in type.getFields()) {
-            // Awkwardly using for...in syntax instead of Object.entires or something functional to preserve typing
-            // (`Object.entires` et al currently gobbles up in type information in Flow)
-            const field = type.getFields()[fieldName];
-
-            // Not every field has an astNode attatched (e.g. __Schema's fields)
-            if (field.astNode != null) {
-                typeToFieldsMap[type.name].push({
-                    field: field.name,
-                    type: getTypeNameFromType(field.astNode.type),
-                });
-            }
-        }
-    }
+        typeToFieldsMap[type.name] = Object.values(type.getFields())
+            .filter(field => field.astNode != null) // Not every field has an astNode attatched (e.g. __Schema)
+            .map(field => ({
+                field: field.name,
+                type: getTypeNameFromType(field?.astNode?.type),
+            }));
+    });
 
     const documentAst = parse(documentText);
     const schemaCoordinates = new Set<string>();
 
     // define a queue for use in our dfs search of the document ast
-    const queue: Array<{| type: string, selectionSet: SelectionSetNode |}> = [];
+    const queue: Array<{ type: string; selectionSet: SelectionSetNode }> = [];
 
     // Enqueue the roots of the document
-    documentAst.definitions.forEach((definition) => {
+    documentAst.definitions.forEach(definition => {
         /**
          * The root of a query, subscription or mutation operation. Example:
          *
@@ -149,12 +131,18 @@ export default function extractSchemaCoordinates(
          *     }
          */
         if (definition.kind === 'OperationDefinition') {
-            const { name: typeName } = getOperationRootType(builtSchema, definition);
-            queue.push({ type: typeName, selectionSet: definition.selectionSet });
+            const rootType = builtSchema.getRootType(definition.operation);
+            if (rootType == null) {
+                throw new GraphQLError(`Schema is not configured to execute ${definition.operation} operation.`, {
+                    nodes: definition,
+                });
+            }
 
-            // Any custom inputs should show up as a schema coordinate, and will be defined
-            // in the operation ast node.
-            definition.variableDefinitions.forEach((variable) => {
+            queue.push({ type: rootType.name, selectionSet: definition.selectionSet });
+
+            // Any inputs should show up as a schema coordinate, and will be defined in the operation ast node.
+            /* istanbul ignore next: I think the else branch always returns an array, but TS tells me it's nullable. */
+            (definition.variableDefinitions ?? []).forEach(variable => {
                 const variableTypeName = getTypeNameFromType(variable);
                 // don't add built-in scalar input types
                 if (!builtInScalars.has(variableTypeName)) {
@@ -177,11 +165,11 @@ export default function extractSchemaCoordinates(
         }
     });
 
-    invariant(queue.length > 0, 'Expected to find a query or mutation operation in the provided document');
+    assert(queue.length > 0, 'Expected to find a query or mutation operation in the provided document');
 
     // Start our DFS iteration cycle
     while (queue.length > 0) {
-        const { type, selectionSet } = queue.pop();
+        const { type, selectionSet } = queue.pop() as NonNullable<ReturnType<typeof queue.pop>>;
 
         selectionSet.selections.forEach((selection: SelectionNode) => {
             /**
@@ -190,27 +178,26 @@ export default function extractSchemaCoordinates(
              * - InlineFragment (e.g. `... on Parrot`)
              * - FragmentSpread (e.g. `...parrotFacts`)
              *
-             * @see https://github.com/graphql/graphql-js/blob/278bd/src/language/ast.js#L287
+             * @see https://github.com/graphql/graphql-js/blob/2e29180c0bba/src/language/ast.ts#L373
              */
+            if (selection.kind === Kind.FRAGMENT_SPREAD) {
+                // we don't care about fragment spreads - the definition of the fragment itself will be parsed elsewhere
+                return;
+            }
 
-            if (selection.kind === 'InlineFragment') {
-                /**
-                 * TODO: Work out if this will ever not be the case?
-                 * It's unclear why typeCondition is a maybe type.
-                 * @see https://github.com/graphql/graphql-js/blob/278bde/src/language/ast.js#L318
-                 */
-                invariant(
-                    selection.typeCondition != null,
-                    "Inline fragment doesn't appear to have a type conition set",
-                );
-                queue.push({ type: selection.typeCondition.name.value, selectionSet: selection.selectionSet });
+            if (selection.kind === Kind.INLINE_FRAGMENT) {
+                // Inline fragments may look like this https://spec.graphql.org/October2021/#example-77377
+                if (selection.typeCondition == null) {
+                    queue.push({ type, selectionSet: selection.selectionSet });
+                } else {
+                    queue.push({ type: selection.typeCondition.name.value, selectionSet: selection.selectionSet });
+                }
                 return;
             }
 
             const fieldName = selection.name.value;
 
-            // TODO: Add an option to allow fragment names to show up as attributes?
-            if (selection.kind !== 'FragmentSpread') {
+            if (selection.kind === Kind.FIELD) {
                 // Add this path to the set
                 schemaCoordinates.add(`${type}.${fieldName}`);
             }
