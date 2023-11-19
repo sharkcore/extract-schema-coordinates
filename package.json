@@ -16,8 +16,7 @@
     "scripts": {
         "build": "npx tsup-node src/extract-schema-coordinates.ts --dts --format esm,cjs --out-dir lib",
         "typecheck": "npx tsup-node src/extract-schema-coordinates.ts --dts-only",
-        "postinstall": "npx husky install",
-        "test": "NODE_OPTIONS=--experimental-vm-modules  jest"
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest"
     },
     "devDependencies": {
         "@tsconfig/node18": "^18.2.2",
