@@ -1,6 +1,6 @@
 {
     "name": "extract-schema-coordinates",
-    "version": "3.0.4",
+    "version": "3.0.5",
     "description": "extract schema coordinates from GraphQL documents",
     "type": "module",
     "exports": {
@@ -17,7 +17,7 @@
         "build": "npx tsup-node src/extract-schema-coordinates.ts --dts --format esm,cjs --out-dir lib",
         "typecheck": "npx tsup-node src/extract-schema-coordinates.ts --dts-only",
         "postinstall": "npx husky install",
-        "prepare": "bash -c \"cat <<< $(jq 'del(.scripts.postinstall)' package.json) > package.json\"",
+        "prepare": "./strip-postinstall",
         "test": "NODE_OPTIONS=--experimental-vm-modules jest"
     },
     "devDependencies": {
