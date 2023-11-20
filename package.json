@@ -1,12 +1,14 @@
 {
     "name": "extract-schema-coordinates",
-    "version": "3.0.7",
+    "version": "3.0.8",
     "description": "extract schema coordinates from GraphQL documents",
     "type": "module",
+    "types": "./lib/extract-schema-coordinates.d.ts",
     "exports": {
         ".": {
             "require": "./lib/extract-schema-coordinates.cjs",
-            "import": "./lib/extract-schema-coordinates.js"
+            "import": "./lib/extract-schema-coordinates.js",
+            "types": "./lib/extract-schema-coordinates.d.ts"
         }
     },
     "repository": "git@github.com:sharkcore/extract-schema-coordinates.git",
