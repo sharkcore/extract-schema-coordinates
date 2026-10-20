@@ -1,4 +1,3 @@
-import util from 'node:util';
 import assert from 'node:assert';
 import memoize from 'lodash.memoize';
 import {
@@ -35,7 +34,7 @@ function getTypeNameFromType(type: any): string {
     }
 
     // Tell flow that we exhausted the search for the NamedType
-    assert(type.kind === 'NamedType', `Expected ${util.inspect(type)} to be a NamedType`);
+    assert.strictEqual(type.kind, Kind.NAMED_TYPE);
 
     return type.name.value;
 }
