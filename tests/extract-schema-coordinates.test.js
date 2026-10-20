@@ -374,3 +374,64 @@ test('throws error on unsupported operation types', () => {
         ),
     ).toThrow(/Schema is not configured to execute subscription/);
 });
+
+test('uses the right schema when called with different schemas', () => {
+    const documentText = /* GraphQL */ `
+        {
+            animal {
+                name
+            }
+        }
+    `;
+    const schemaA = /* GraphQL */ `
+        type Query {
+            animal: Cat
+        }
+        type Cat {
+            name: String
+        }
+    `;
+    const schemaB = /* GraphQL */ `
+        type Query {
+            animal: Dog
+        }
+        type Dog {
+            name: String
+        }
+    `;
+
+    expect([...extractSchemaCoordinates(documentText, schemaA)].sort()).toEqual(['Cat.name', 'Query.animal']);
+    expect([...extractSchemaCoordinates(documentText, schemaB)].sort()).toEqual(['Dog.name', 'Query.animal']);
+    expect([...extractSchemaCoordinates(documentText, schemaA)].sort()).toEqual(['Cat.name', 'Query.animal']);
+});
+
+test('is fast for many documents against a large schema', () => {
+    // A schema with ~7.5k fields. Previously each call rebuilt a map of every field in the schema
+    // (and formatted an assertion message for each), taking ~2s per document for a schema this size.
+    const numTypes = 500;
+    const numFieldsPerType = 15;
+    const types = Array.from({ length: numTypes }, (_, i) => {
+        const fields = Array.from({ length: numFieldsPerType }, (__, j) =>
+            j === 0 ? `f0: T${(i + 1) % numTypes}` : `f${j}: String`,
+        );
+        return `type T${i} { ${fields.join(' ')} }`;
+    });
+    const largeSchema = [
+        `type Query { ${Array.from({ length: numTypes }, (_, i) => `t${i}: T${i}`).join(' ')} }`,
+        ...types,
+    ].join('\n');
+    const documents = Array.from({ length: 1000 }, (_, i) => `{ t${i % numTypes} { f1 f0 { f2 } } }`);
+
+    const start = Date.now();
+    documents.forEach(documentText => extractSchemaCoordinates(documentText, largeSchema));
+    const elapsedMs = Date.now() - start;
+
+    expect([...extractSchemaCoordinates(documents[0], largeSchema)].sort()).toEqual([
+        'Query.t0',
+        'T0.f0',
+        'T0.f1',
+        'T1.f2',
+    ]);
+    // ~10ms in practice, vs ~30 minutes before
+    expect(elapsedMs).toBeLessThan(5000);
+});

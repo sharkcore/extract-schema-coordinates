@@ -7,6 +7,7 @@ import {
     GraphQLError,
     Kind,
     isObjectType,
+    type GraphQLSchema,
     type SelectionNode,
     type SelectionSetNode,
 } from 'graphql';
@@ -35,10 +36,57 @@ function getTypeNameFromType(type: any): string {
     }
 
     // Tell flow that we exhausted the search for the NamedType
-    assert(type.kind === 'NamedType', `Expected ${util.inspect(type)} to be a NamedType`);
+    // (only build the message on failure - util.inspect is expensive, and this runs for every field in the schema)
+    /* istanbul ignore if: every non-NamedType type node has a .type */
+    if (type.kind !== 'NamedType') {
+        assert.fail(`Expected ${util.inspect(type)} to be a NamedType`);
+    }
 
     return type.name.value;
 }
+
+/**
+ * Contruct a map of type names in the schema to the fields they contain.
+ * This only depends on the schema, so it's memoized (on the built schema) rather than
+ * recomputed for every document - that's expensive for a large schema.
+ *
+ * Example:
+ * ```js
+ * {
+ *     Query: [
+ *         { field: "business", type: "Business" },
+ *         { field: "business_search", type: "Business" },
+ *         { field: "event", type: "Event" },
+ *     ],
+ *     Business: [
+ *         { field: "name", type: "String" },
+ *         { field: "events", type: "Event" },
+ *         { field: "reviews", type: "Review" },
+ *     ],
+ *     Event: [
+ *         { field: "name", type: "String" },
+ *         { field: "event_site_url", type: "String" },
+ *     ],
+ *     ...
+ * }
+ * ```
+ */
+const getTypeToFieldsMap = memoize((builtSchema: GraphQLSchema) => {
+    const typeToFieldsMap: Record<string, Array<{ field: string; type: string }>> = {};
+
+    Object.values(builtSchema.getTypeMap()).forEach(type => {
+        if (!isObjectType(type)) return;
+
+        typeToFieldsMap[type.name] = Object.values(type.getFields())
+            .filter(field => field.astNode != null) // Not every field has an astNode attatched (e.g. __Schema)
+            .map(field => ({
+                field: field.name,
+                type: getTypeNameFromType(field?.astNode?.type),
+            }));
+    });
+
+    return typeToFieldsMap;
+});
 
 /**
  * Extracts a list of schema "coordinates" contained in a GraphQL document.
@@ -78,42 +126,7 @@ export default function extractSchemaCoordinates(
     // Turn the provided schema text (SDL) into a GraphQLSchema object and AST
     const builtSchema = buildSchema(schemaText);
 
-    /**
-     * Contruct a map of type names in the schema to the fields they contain.
-     *
-     * Example:
-     * ```js
-     * {
-     *     Query: [
-     *         { field: "business", type: "Business" },
-     *         { field: "business_search", type: "Business" },
-     *         { field: "event", type: "Event" },
-     *     ],
-     *     Business: [
-     *         { field: "name", type: "String" },
-     *         { field: "events", type: "Event" },
-     *         { field: "reviews", type: "Review" },
-     *     ],
-     *     Event: [
-     *         { field: "name", type: "String" },
-     *         { field: "event_site_url", type: "String" },
-     *     ],
-     *     ...
-     * }
-     * ```
-     */
-    const typeToFieldsMap: Record<string, Array<{ field: string; type: string }>> = {};
-
-    Object.values(builtSchema.getTypeMap()).forEach(type => {
-        if (!isObjectType(type)) return;
-
-        typeToFieldsMap[type.name] = Object.values(type.getFields())
-            .filter(field => field.astNode != null) // Not every field has an astNode attatched (e.g. __Schema)
-            .map(field => ({
-                field: field.name,
-                type: getTypeNameFromType(field?.astNode?.type),
-            }));
-    });
+    const typeToFieldsMap = getTypeToFieldsMap(builtSchema);
 
     const documentAst = parse(documentText);
     const schemaCoordinates = new Set<string>();
