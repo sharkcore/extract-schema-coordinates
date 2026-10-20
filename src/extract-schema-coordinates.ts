@@ -34,7 +34,6 @@ function getTypeNameFromType(type: any): string {
     }
 
     // Tell flow that we exhausted the search for the NamedType
-    // Don't util.inspect the node here - graphql 16 nodes reference the full source text, making that very slow
     assert.strictEqual(type.kind, Kind.NAMED_TYPE);
 
     return type.name.value;
